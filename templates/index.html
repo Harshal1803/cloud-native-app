@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>System Monitoring</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        .plotly-graph-div {
+            margin: auto;
+            width: 50%;
+            background-color: rgba(151, 128, 128, 0.688);
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>System Monitoring</h1>
+        <div id="cpu-gauge"></div>
+        <div id="mem-gauge"></div>
+        <div id="message" style="color: red; font-weight: bold;"></div>
+    </div>
+
+    <script>
+        function drawGauges(cpu, memory) {
+            const cpuGauge = {
+                type: "indicator",
+                mode: "gauge+number",
+                value: cpu,
+                gauge: {
+                    axis: { range: [null, 100] },
+                    bar: { color: "#1f77b4" },
+                    steps: [
+                        { range: [0, 50], color: "#d9f0a3" },
+                        { range: [50, 85], color: "#ffeb84" },
+                        { range: [85, 100], color: "#ff5f5f" }
+                    ],
+                    threshold: {
+                        line: { color: "red", width: 4 },
+                        thickness: 0.75,
+                        value: cpu
+                    }
+                }
+            };
+
+            const memGauge = {
+                type: "indicator",
+                mode: "gauge+number",
+                value: memory,
+                gauge: {
+                    axis: { range: [null, 100] },
+                    bar: { color: "#1f77b4" },
+                    steps: [
+                        { range: [0, 50], color: "#d9f0a3" },
+                        { range: [50, 85], color: "#ffeb84" },
+                        { range: [85, 100], color: "#ff5f5f" }
+                    ],
+                    threshold: {
+                        line: { color: "red", width: 4 },
+                        thickness: 0.75,
+                        value: memory
+                    }
+                }
+            };
+
+            Plotly.newPlot('cpu-gauge', [cpuGauge], { title: "CPU Utilization" });
+            Plotly.newPlot('mem-gauge', [memGauge], { title: "Memory Utilization" });
+        }
+
+        async function updateGauges() {
+            const res = await fetch('/data');
+            const data = await res.json();
+
+            Plotly.restyle('cpu-gauge', { value: [data.cpu] });
+            Plotly.restyle('mem-gauge', { value: [data.memory] });
+
+            const msgBox = document.getElementById("message");
+            msgBox.innerText = data.message || '';
+        }
+
+        window.onload = async function () {
+            const res = await fetch('/data');
+            const data = await res.json();
+            drawGauges(data.cpu, data.memory);
+            setInterval(updateGauges, 2000); // every 2 seconds
+        };
+    </script>
+</body>
+</html>
